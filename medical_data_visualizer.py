@@ -1,60 +1,110 @@
+
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 
-# 1
-df = None
 
-# 2
-df['overweight'] = None
-
-# 3
-
-
-# 4
 def draw_cat_plot():
-    # 5
-    df_cat = None
+    # Import data
+    df = pd.read_csv("medical_examination.csv")
 
+    # Add overweight column
+    df["overweight"] = (
+        df["weight"] / (df["height"] / 100) ** 2 > 25
+    ).astype(int)
 
-    # 6
-    df_cat = None
-    
+    # Normalize cholesterol and glucose
+    df["cholesterol"] = (df["cholesterol"] > 1).astype(int)
+    df["gluc"] = (df["gluc"] > 1).astype(int)
 
-    # 7
+    # Create categorical plot DataFrame
+    df_cat = pd.melt(
+        df,
+        id_vars=["cardio"],
+        value_vars=[
+            "cholesterol",
+            "gluc",
+            "smoke",
+            "alco",
+            "active",
+            "overweight",
+        ],
+    )
 
+    # Group and reformat data
+    df_cat = (
+        df_cat.groupby(["cardio", "variable", "value"])
+        .size()
+        .reset_index(name="total")
+    )
 
+    # Draw categorical plot
+    fig = sns.catplot(
+        data=df_cat,
+        x="variable",
+        y="total",
+        hue="value",
+        col="cardio",
+        col_wrap=2,
+        kind="bar",
+    )
 
-    # 8
-    fig = None
+    fig.set_axis_labels("variable", "total")
+    fig.set_titles("Cardio = {col_name}")
+    fig.set_xticklabels(rotation=0)
 
+    # Save the plot
+    fig.savefig("catplot.png")
 
-    # 9
-    fig.savefig('catplot.png')
     return fig
 
 
-# 10
 def draw_heat_map():
-    # 11
-    df_heat = None
+    # Import data
+    df = pd.read_csv("medical_examination.csv")
 
-    # 12
-    corr = None
+    # Add overweight column
+    df["overweight"] = (
+        df["weight"] / (df["height"] / 100) ** 2 > 25
+    ).astype(int)
 
-    # 13
-    mask = None
+    # Normalize cholesterol and glucose
+    df["cholesterol"] = (df["cholesterol"] > 1).astype(int)
+    df["gluc"] = (df["gluc"] > 1).astype(int)
 
+    # Clean data
+    df_heat = df[
+        (df["ap_lo"] <= df["ap_hi"])
+        & (df["height"] >= df["height"].quantile(0.025))
+        & (df["height"] <= df["height"].quantile(0.975))
+        & (df["weight"] >= df["weight"].quantile(0.025))
+        & (df["weight"] <= df["weight"].quantile(0.975))
+    ]
 
+    # Calculate correlation matrix
+    corr = df_heat.corr()
 
-    # 14
-    fig, ax = None
+    # Generate mask for upper triangle
+    mask = np.triu(np.ones_like(corr, dtype=bool))
 
-    # 15
+    # Set up the matplotlib figure
+    fig, ax = plt.subplots(figsize=(12, 12))
 
+    # Draw heatmap
+    sns.heatmap(
+        corr,
+        mask=mask,
+        annot=True,
+        fmt=".1f",
+        square=True,
+        linewidths=1,
+        center=0,
+        cbar_kws={"shrink": 0.5},
+        ax=ax,
+    )
 
+    # Save the plot
+    fig.savefig("heatmap.png")
 
-    # 16
-    fig.savefig('heatmap.png')
     return fig
